@@ -104,6 +104,7 @@ app.get('/auth/amazon',
 app.get('/auth/amazon/callback',
   passport.authenticate('amazon', { failureRedirect: '/login' }),
   function(req, res) {
+    console.log(res);
     res.redirect('/');
   });
 
