@@ -6,7 +6,7 @@ var express = require('express')
 var AMAZON_CLIENT_ID = "amzn1.application-oa2-client.f335fec1893247589da32842554e802a"
 var AMAZON_CLIENT_SECRET = "287b6dace6db12d81de4cdcc64d5ad53394c26ff107a5dba516c3ddd3017f42c";
 
-var uri = "https://passport-amazon.herokuapp.com/auth/amazon/callback";
+var uri = "http://localhost:3000/auth/amazon/callback";
 var encodedUri = encodeURI(uri);
 
 
