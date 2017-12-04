@@ -112,7 +112,11 @@ app.get('/logout', function(req, res){
   res.redirect('/');
 });
 
-app.listen(3000);
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, function () {
+  console.log('Listening on port ' + PORT);
+});
 
 
 // Simple route middleware to ensure user is authenticated.
