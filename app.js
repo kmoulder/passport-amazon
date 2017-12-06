@@ -9,6 +9,9 @@ var AMAZON_CLIENT_SECRET = "287b6dace6db12d81de4cdcc64d5ad53394c26ff107a5dba516c
 var uri = "http://localhost:3000/auth/amazon/callback";
 var encodedUri = encodeURI(uri);
 
+var contacts = {};
+var newContact = {};
+var newAccount = {};
 
 // Passport session setup.
 //   To support persistent login sessions, Passport needs to be able to
@@ -25,7 +28,6 @@ passport.deserializeUser(function(obj, done) {
   done(null, obj);
 });
 
-
 // Use the AmazonStrategy within Passport.
 //   Strategies in Passport require a `verify` function, which accept
 //   credentials (in this case, an accessToken, refreshToken, and Amazon
@@ -33,7 +35,6 @@ passport.deserializeUser(function(obj, done) {
 passport.use(new AmazonStrategy({
     clientID: AMAZON_CLIENT_ID,
     clientSecret: AMAZON_CLIENT_SECRET,
-
     callbackURL: encodedUri
   },
   function(accessToken, refreshToken, profile, done) {
@@ -48,9 +49,6 @@ passport.use(new AmazonStrategy({
     });
   }
 ));
-
-
-
 
 var app = express.createServer();
 
@@ -71,9 +69,19 @@ app.configure(function() {
   app.use(express.static(__dirname + '/public'));
 });
 
-
 app.get('/', function(req, res){
-  res.render('index', { user: req.user });
+  res.render('index', { user: req.user, contacts: {} });
+});
+
+app.get('/account/:userId', function(req, res){
+  var user = req.params.userId;
+  if (contacts[user] != undefined){
+    res.render('index', { user: req.user, contacts: contacts[user] });
+  }
+  else {
+    res.render('index', { user: req.user, contacts: {} });
+  }
+
 });
 
 app.get('/account', ensureAuthenticated, function(req, res){
@@ -104,13 +112,63 @@ app.get('/auth/amazon',
 app.get('/auth/amazon/callback',
   passport.authenticate('amazon', { failureRedirect: '/login' }),
   function(req, res) {
-    console.log(res);
-    res.redirect('/');
+    let raw = JSON.parse(req.user._raw);
+    let user = raw.user_id.slice(14);
+    res.redirect('/account/'+user);
   });
 
 app.get('/logout', function(req, res){
   req.logout();
   res.redirect('/');
+});
+
+
+// var contacts = {'john@main.com':[{'id':0, 'name':'John', 'number':'28290817'}]};
+
+app.post('/add-contact', function(req, res) {
+  let name = req.body.contactName;
+  let number = req.body.contactNumber;
+  let userId = req.body.userId;
+  if (userId in contacts) {
+    let subContacts = contacts[userId];
+    let contactId = subContacts.length;
+    console.log('the ID is '+ contactId);
+    newContact = {id:contactId, name:name, number:number};
+    subContacts.push(newContact);
+  }
+  else {
+    newContact = [{id:'0', name:name, number:number}];
+    contacts[userId] = newContact;
+  }
+  console.log(contacts);
+  res.redirect('/account/'+userId);
+});
+
+// edit a contact
+app.post('/edit-contact', function(req, res) {
+
+  let contactId = req.body.contactId;
+  let name = req.body.editContactName;
+  let number = req.body.editContactNumber;
+  let userId = req.body.userId;
+  let subContacts = contacts[userId];
+  let contact = subContacts[contactId];
+  contact.name = name;
+  contact.number = number;
+
+  res.redirect('/account/'+userId);
+});
+
+// delete a contact
+app.post('/delete-contact', function(req, res) {
+
+    let deleteId = req.body.deleteId;
+    let userId = req.body.userId;
+    let subContacts = contacts[userId];
+    console.log('the deleted object is '+ subContacts[deleteId])
+    subContacts.splice(deleteId, 1);
+
+    res.redirect('/account/'+userId);
 });
 
 const PORT = process.env.PORT || 3000;
@@ -127,5 +185,5 @@ app.listen(PORT, function () {
 //   login page.
 function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) { return next(); }
-  res.redirect('/login')
+  res.redirect('/index')
 }
