@@ -176,6 +176,14 @@ app.listen(PORT, function () {
   console.log('Listening on port ' + PORT);
 });
 
+app.get('/getId/:userId', function (req, res) {
+  var user = req.params.userId;
+    res.setHeader('Content-Type', 'application/json');
+    res.send({
+      userId: userId
+    });
+});
+
 
 // Simple route middleware to ensure user is authenticated.
 //   Use this route middleware on any resource that needs to be protected.  If
